@@ -1403,7 +1403,6 @@ function renderWeek(w) {
   document.getElementById('week-dates').textContent = weekStarts[idx] + ' – ' + weekEnds[idx] + ' 2026';
 
   // Clear old tabs, use accordion in panels container
-  document.getElementById('day-tabs-container').innerHTML = '';
   const panelsEl = document.getElementById('day-panels-container');
   panelsEl.innerHTML = '';
 
@@ -2121,7 +2120,7 @@ function renderWeek(w) {
   currentWeek = w;
   if (!customWeeks) loadCustomWeeks();
   const wData = customWeeks[w - 1];
-  document.getElementById('week-dates').textContent = weekStarts[w-1] + ' – ' + weekEnds[w-1] + ' 2025';
+  document.getElementById('week-dates').textContent = weekStarts[w-1] + ' – ' + weekEnds[w-1] + ' 2026';
   const container = document.getElementById('day-panels-container');
   container.innerHTML = '';
 
@@ -2551,17 +2550,18 @@ async function generateIATip(){
   box.style.display='block';
   box.innerHTML='<span style="color:var(--text3)">⏳ La IA está creando un tip personalizado...</span>';
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp = await fetch('http://localhost:3000/api/generar-tip', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:400,
-        messages:[{role:'user',content:(function(){var pr=getProfile();var m=getEffectiveMetrics(pr);return 'Eres nutricionista deportivo experto. El usuario quiere '+(pr.pesoActual>pr.pesoMeta?'bajar':'subir')+' de '+pr.pesoActual+' kg a '+pr.pesoMeta+' kg. Sexo: '+pr.sexo+', edad: '+pr.edad+'. Restricciones: '+stateM2.restrictions.join(', ')+'. Come '+stateM2.kcalGoal+' kcal/día (proteína meta '+m.prot+'g). Genera UN solo consejo muy específico, práctico y accionable HOY. Máximo 3-4 oraciones directas. Sin saludos ni listas. Solo el consejo en español.';})()}]
-      })
+    body: JSON.stringify({
+      perfil: getProfile(),
+      restricciones: stateM2.restrictions,
+      kcal: stateM2.kcalGoal
+    })
     });
-    const data=await resp.json();
-    const text=data.content&&data.content[0]?data.content[0].text:'No se pudo generar.';
+    const data = await resp.json();
+    const text = data.tip || data.resultado || 'No se pudo generar.';
     box.innerHTML='<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#7F77DD;margin-bottom:8px">✨ Tip personalizado con IA</div>'+text;
   }catch(e){
     box.innerHTML='<span style="color:var(--text3)">⚠️ Error al conectar. Verifica tu conexión.</span>';
